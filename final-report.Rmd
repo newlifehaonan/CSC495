@@ -1,0 +1,180 @@
+---
+title: Appendix
+output: html_document
+---
+
+<!-- toc -->
+
+  1. [Setting Globals](#setting-globals)
+  1. [Entire Graph](#entire-graph)
+  1. [Product-Product Projection](#product-product-projection)
+  1. [Filter Graph and Add Metadata](#filter-graph-and-add-metadata)
+  1. [Evaluating Genres](#evaluating-genres)
+    i. [Top 5 Categories in each Genre](#top-5-categories-in-each-genre)
+    i. [Basic Genre Stats](#basic-genre-stats)
+    i. [Helpfulness and Genre](#helpfulness-and-genre)
+    i. [Rating and Genre](#rating-and-genre)
+  1. [CUG and QAP Testing for Kicks](#cug-and-qap-testing-for-kicks)
+  1. [Betweenness](#betweenness)
+
+<!-- tocstop -->
+
+```{r echo=FALSE}
+library(knitr)
+setwd(getSrcDirectory(function(x) {x}))
+
+read_chunk("final-report.R")
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r loadLibraries, echo=FALSE, message=FALSE}
+```
+
+### Setting Globals
+
+Before starting the analysis, we need to set a `seed` to ensure these results
+are reproducable. Also, adding some variables for color for consistency
+throughout the analysis.
+
+```{r setGlobals}
+```
+
+### Entire Graph
+
+Load graph with all nodes, products, users, and categories.
+
+```{r entireGraph}
+```
+
+Save graph for next step.
+
+```{r entireGraph.skip, eval=FALSE}
+```
+
+### Product-Product Projection
+
+Project bipartite network into product-product network over user reviews.
+
+```{r ppProjection.save, eval=FALSE}
+```
+
+Load and provide a summary of the product-product network.
+
+```{r ppProjection.load}
+```
+
+### Filter Graph and Add Metadata
+
+Visualize edge weights and filter out low weight edges and low strenght nodes.
+
+```{r filter, out.width='100%'}
+```
+
+Now we run some clustering algorithms. Note, we're not running betweenness
+because this product-product projection is enormous and we don't have access
+to a computer powerful enough to calculate this in a reasonable time.
+
+```{r filter.save, eval=FALSE}
+```
+
+Visualize some stats about clusters and choose the best one on quantitative
+and qualitative attributes. We chose leading eigenvector clusters because they
+have relatively high modularity and successfully isolate outliers and items in
+the _Digital Music_ category, which we don't want to include in this analysis.
+
+```{r filter.load}
+```
+
+At this point we add category metadata to the product-product projection so
+that we can use them to label our genres. It was easier to do this step with
+python tooling than R, please refer to python code if you are interested in how
+this was done; specifically the `add_categories` function in `graph_tools.py`.
+
+### Evaluating Genres
+
+As stated before, we chose to use leading eigenvector clustering for our
+clusters. Communties 6 and 7 represent outliers and the _Digital Music_
+category, so we remove those. We also remove the _Pop_ and _Rock_ categories
+because these are significantly more connected than all the other categoires;
+using them in our analysis would be too generic.
+
+```{r comm.start}
+```
+
+#### Top 5 Categories in each Genre
+
+To get an idea of what "genre" a community represents we summarized the top 5
+most connected category nodes in each community. Note: a product could be
+counted more than once in these frequencies, so the total of these counts is
+not the number of products in the genre.
+
+```{r comm.top5, out.width='100%'}
+```
+
+#### Basic Genre Stats
+
+For the next steps, we first remove `category` nodes because we don't to
+include these for calucations going forward. Then, we visualize some basic
+stats about each community. Interesting to note that genre 2 and 3 have about
+the same number of products and reviews, but genre 2 has much higher strength
+nodes than all the other communties. Might be related to what we'll see later
+genre 2 having a very wide rating range. Genre 2 must have a tight community
+while 3 has a much looser community of reviewers.
+
+```{r comm.basicStats, out.width='100%'}
+```
+
+#### Helpfulness and Genre
+
+Visualize stats about helpfulness per genre. Interesting to note here that
+helpfulness vote totals are low in genre 2 even though it has the most products
+and reviews. To see if there's any significance to the helpfulness statistics
+in determining genres, we run assortativity on it; unfortunately the value ends
+up very close to 0, meaing this attribute is not assortative negatively or
+positively. Maybe there is a different underlying attribute that accounts for
+the differences in genre 2?
+
+```{r comm.help, out.width='100%'}
+```
+
+#### Rating and Genre
+
+Visualize stats about rating per genre. Interesting to note here rating in
+genre 2 has a much wider distribution than in other genres. Also, genre 4 has
+a distribution highly skewed towards 5. Might be indicative of some underlying
+pattern in the genre. Unfortunately, here too, when running assortativity on
+the rating attribute we find that it's value is very near 0, meaning this
+attribute has little correlation to these genres.
+
+```{r comm.rating, out.width='100%'}
+```
+
+### CUG and QAP Testing for Kicks
+
+The following section are CUG and QAP tests against the helpfulness and rating
+stats in our graph. Our graph is unique when compared against the randomly
+generated networks; unfortunately, given that the statistics are already very
+close to 0, these evaluations are not very meaningful.
+
+```{r rand.help, message=FALSE}
+```
+
+```{r rand.help.save, eval=FALSE}
+```
+
+```{r rand.help.load}
+```
+
+```{r rand.rate.save, eval=FALSE}
+```
+
+```{r rand.rate.load}
+```
+
+### Betweenness
+
+Product betweenness was calculated for these nodes using the
+`add_centrality_stats` function in `analysis.py`. Python is able to calculate
+this in a much more reasonable time than R; we're unsure why in particular that
+is, but this graph is huge and small differences have a big effect.
+
